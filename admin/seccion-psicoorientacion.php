@@ -141,7 +141,7 @@ $o = is_array($o) ? $o : array();
                     <th scope="row">Link del botón "Pedir cita"</th>
                     <td>
                         <input type="url" name="info_colegio_settings[psico_cita_url]" value="<?php echo esc_url($o['psico_cita_url'] ?? ''); ?>" class="regular-text" style="width:100%;" placeholder="https://forms.google.com/...">
-                        <p class="description">Pega aquí el enlace del formulario, correo o WhatsApp.</p>
+                        <p class="description">Pega aquí el enlace del formulario o WhatsApp. Si lo dejas vacío, se mostrarán los teléfonos configurados en Contacto.</p>
                     </td>
                 </tr>
             </table>
@@ -154,7 +154,8 @@ $o = is_array($o) ? $o : array();
                 <tr>
                     <th scope="row">Teléfonos Importantes</th>
                     <td>
-                        <textarea name="info_colegio_settings[psico_emergencias]" rows="3" class="regular-text" style="width:100%;"><?php echo esc_textarea($o['psico_emergencias'] ?? 'Si tienes una emergencia fuera del colegio o te sientes en peligro, llama a la línea 141 del ICBF (apoyo a menores) o a la línea local de salud mental.'); ?></textarea>
+                        <textarea name="info_colegio_settings[psico_emergencias]" rows="3" class="regular-text" style="width:100%;"><?php echo esc_textarea($o['psico_emergencias'] ?? 'Si hay peligro inmediato, llama a emergencias. Para proteger a niñas, niños y adolescentes, comunícate con el ICBF. Ante una crisis de salud mental, busca atención en urgencias de tu EPS o IPS.'); ?></textarea>
+                        <p class="description">En la página se muestran botones para llamar al 123, al 141 del ICBF y a los teléfonos configurados en Contacto. En una crisis de salud mental, busca atención en urgencias de tu EPS o IPS.</p>
                     </td>
                 </tr>
             </table>
