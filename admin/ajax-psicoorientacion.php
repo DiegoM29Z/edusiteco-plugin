@@ -27,7 +27,10 @@ add_action('wp_ajax_edusiteco_get_recursos', function () {
             $thumb_url = '';
             $has_attachment = false;
             
-            $attachment_id = get_post_thumbnail_id();
+            $attachment_id = (int) get_post_meta(get_the_ID(), 'recurso_attachment_id', true);
+            if (!$attachment_id) {
+                $attachment_id = get_post_thumbnail_id();
+            }
             if ($attachment_id) {
                 $has_attachment = true;
                 $thumb_src = wp_get_attachment_image_src($attachment_id, 'thumbnail');
@@ -110,13 +113,19 @@ add_action('wp_ajax_edusiteco_save_recurso', function () {
 
     // Gestionar attachment (Thumbnail) y URL directa
     if ($attachment_id > 0) {
-        set_post_thumbnail($post_id, $attachment_id);
+        update_post_meta($post_id, 'recurso_attachment_id', $attachment_id);
         $file_url = wp_get_attachment_url($attachment_id);
         if ($file_url) {
             update_post_meta($post_id, 'recurso_url', $file_url);
         }
+        if (strpos($mime_type, 'image/') === 0) {
+            set_post_thumbnail($post_id, $attachment_id);
+        } else {
+            delete_post_thumbnail($post_id);
+        }
     } else {
         delete_post_thumbnail($post_id);
+        delete_post_meta($post_id, 'recurso_attachment_id');
         delete_post_meta($post_id, 'recurso_url');
     }
 
@@ -140,7 +149,10 @@ add_action('wp_ajax_edusiteco_get_recurso_single', function () {
         wp_send_json_error('No tienes permisos para editar este recurso.');
     }
 
-    $attachment_id = get_post_thumbnail_id($id);
+    $attachment_id = (int) get_post_meta($id, 'recurso_attachment_id', true);
+    if (!$attachment_id) {
+        $attachment_id = get_post_thumbnail_id($id);
+    }
     $filename = '';
     $thumb_url = '';
 
