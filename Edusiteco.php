@@ -581,3 +581,4 @@ include_once plugin_dir_path(__FILE__) . 'admin/accesibilidad/wp-accessibility-p
 include_once plugin_dir_path(__FILE__) . 'admin/ajax-profesores.php';
 include_once plugin_dir_path(__FILE__) . 'admin/ajax-comunicados.php';
 include_once plugin_dir_path(__FILE__) . 'admin/ajax-psicoorientacion.php';
+include_once plugin_dir_path(__FILE__) . 'admin/psicoorientacion-defaults.php';
