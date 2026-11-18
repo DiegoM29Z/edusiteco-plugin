@@ -32,7 +32,7 @@ $o = is_array($o) ? $o : array();
 
         <div class="psico-box">
             <h3>Áreas de ayuda</h3>
-            <p class="description">Agrega, edita o elimina las tarjetas visibles para estudiantes y familias.</p>
+            <p class="description">Agrega, edita o elimina las tarjetas visibles para estudiantes y familias que lo necesitan.</p>
             <?php
             $default_areas = array(
                 array('titulo' => 'Tus Emociones', 'texto' => '¿Te sientes triste, con ansiedad o problemas en casa? Hablemos.', 'icono' => '', 'material_icon' => 'favorite'),
