@@ -1,6 +1,6 @@
 <?php
 if (!defined('ABSPATH')) exit;
-
+//d
 function edusiteco_ajax_can_manage_comunicados()
 {
     return current_user_can('manage_options') || current_user_can('manage_edusiteco_comunicados');
