@@ -110,6 +110,8 @@ $o = is_array($o) ? $o : array();
                     </div>
                 </div>
             </template>
+            <p class="description">Después de añadir o editar un área, pulsa «Guardar y publicar áreas» para que aparezca en la página.</p>
+            <button type="submit" class="button button-primary">Guardar y publicar áreas</button>
         </div>
 
         <!-- BLOQUE 3: Citas -->
@@ -170,6 +172,9 @@ $o = is_array($o) ? $o : array();
     <div class="psico-crud-section">
         <h2>Gestión de Recursos (Botiquín de Ayuda)</h2>
         <p class="description">Añade materiales en PDF o imagen con una descripción para los estudiantes y sus familias.</p>
+        <div id="recurso-save-notice" class="notice notice-success inline" role="status" aria-live="polite" style="display:none;">
+            <p></p>
+        </div>
         
         <button type="button" class="button button-primary" id="btn-nuevo-recurso" style="margin-bottom: 20px;">
             <span class="dashicons dashicons-plus-alt2" style="margin-top:3px;"></span> Añadir Nuevo Recurso
@@ -490,6 +495,7 @@ jQuery(document).ready(function($) {
 
     // ABRIR MODAL NUEVO
     $('#btn-nuevo-recurso').on('click', function() {
+        $('#recurso-save-notice').hide();
         $('#recurso_titulo').val('');
         $('#recurso_descripcion').val('');
         $('#recurso_id').val('');
@@ -510,6 +516,7 @@ jQuery(document).ready(function($) {
     $('#btn-guardar-recurso').on('click', function(e) {
         e.preventDefault();
         $('#btn-guardar-recurso').prop('disabled', true).text('Guardando...');
+        $('#recurso-save-notice').hide();
         
         var data = {
             action: 'edusiteco_save_recurso',
@@ -525,6 +532,8 @@ jQuery(document).ready(function($) {
             if(response.success) {
                 $('#modal-recurso').fadeOut(200);
                 cargarRecursos();
+                $('#recurso-save-notice p').text(data.id ? 'Los cambios del recurso se guardaron correctamente.' : 'El recurso se guardó y publicó correctamente.');
+                $('#recurso-save-notice').show();
             } else {
                 $('#recurso-feedback').css('color', 'red').text(response.data || 'Error al guardar.');
             }
@@ -536,6 +545,7 @@ jQuery(document).ready(function($) {
 
     // EDITAR RECURSO (Cargar datos)
     $(document).on('click', '.btn-editar-recurso', function() {
+        $('#recurso-save-notice').hide();
         var id = $(this).data('id');
         
         $.post(edusiteco_ajax.ajax_url, {
