@@ -408,6 +408,9 @@ function edusiteco_welcome_screen()
 function edusiteco_admin_page()
 {
     $o = get_option('info_colegio_settings');
+    $settings_updated = isset($_GET['settings-updated'])
+        && is_scalar($_GET['settings-updated'])
+        && 'true' === sanitize_text_field(wp_unslash((string) $_GET['settings-updated']));
 ?>
     <div class="wrap">
         <h1>Configuración de la Información del Colegio</h1>
@@ -415,6 +418,11 @@ function edusiteco_admin_page()
             Desde esta sección puedes ingresar toda la información institucional del colegio dividida por categorías.
             Selecciona una pestaña para editar los datos correspondientes (misión, historia, docentes, símbolos, etc.).
         </p>
+        <?php if ($settings_updated) : ?>
+            <div class="notice notice-success is-dismissible" role="status">
+                <p>Los cambios se guardaron correctamente.</p>
+            </div>
+        <?php endif; ?>
         <a href="<?php echo admin_url('admin.php?page=info-colegio-bienvenida'); ?>"
             style="display:inline-block; margin-top:25px; background:#2271b1; color:white;
                   padding:12px 24px; border-radius:5px; font-size:16px; text-decoration:none;">
@@ -496,6 +504,12 @@ function edusiteco_admin_page()
             const tabs = document.querySelectorAll('.nav-tab');
             const contents = document.querySelectorAll('.tab-content');
             const settingsSaveButton = document.getElementById('info-colegio-save-button');
+            const settingsForm = document.querySelector('form[action="options.php"]');
+
+            if (settingsForm) {
+                contents.forEach(content => settingsForm.appendChild(content));
+                if (settingsSaveButton) settingsForm.appendChild(settingsSaveButton);
+            }
 
             tabs.forEach(tab => {
                 tab.addEventListener('click', e => {
