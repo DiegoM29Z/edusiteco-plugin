@@ -1,6 +1,9 @@
 <?php $edusiteco_is_rectoria_user = !current_user_can('manage_options') && current_user_can('manage_edusiteco_comunicados'); ?>
 <h2><?php echo $edusiteco_is_rectoria_user ? 'Gestión de Comunicados y Circulares' : 'Gestión de Comunicados y Eventos'; ?></h2>
 <p><?php echo $edusiteco_is_rectoria_user ? 'Crea una publicación nueva o elige una existente para actualizarla. Los cambios se publican en el sitio institucional.' : 'Desde este panel puedes administrar rápidamente los comunicados, circulares y eventos del colegio sin salir de esta página.'; ?></p>
+<div id="comunicado-save-notice" class="notice notice-success inline" role="status" aria-live="polite" style="display:none;">
+    <p></p>
+</div>
 
 <div style="margin-top: 20px; margin-bottom: 20px;">
     <button type="button" class="button button-primary button-large" id="btn-nuevo-comunicado" style="margin-right: 10px;">
@@ -71,10 +74,10 @@
                 </div>
             </td>
         </tr>
-        <tr class="no-event-field">
+        <tr>
             <th scope="row"><label for="comunicado_contenido">Descripción / Contenido</label></th>
             <td>
-                <textarea id="comunicado_contenido" rows="6" style="width:100%; max-width:600px;" placeholder="Escribe aquí los detalles del comunicado..."></textarea>
+                <textarea id="comunicado_contenido" rows="6" style="width:100%; max-width:600px;" placeholder="Escribe aquí los detalles del comunicado o evento..."></textarea>
             </td>
         </tr>
         <tr>
@@ -283,9 +286,10 @@ jQuery(document).ready(function($) {
                 var btnDelete = $('<button type="button" class="button button-small" style="color:#b32d2e; border-color:#b32d2e;"></button>');
                 btnDelete.text(isRectoriaUser ? 'Enviar a papelera' : 'Eliminar');
                 btnDelete.on('click', function() {
+                    var title = item.title || 'este comunicado';
                     var confirmation = isRectoriaUser
-                        ? '¿Enviar este comunicado o circular a la papelera? Podrás restaurarlo desde allí.'
-                        : '¿Estás seguro de que deseas eliminar este comunicado?';
+                        ? '¿Enviar "' + title + '" a la papelera? Podrás restaurarlo desde allí.'
+                        : '¿Eliminar definitivamente "' + title + '"? Esta acción no se puede deshacer.';
                     if (confirm(confirmation)) {
                         eliminarComunicado(item.id);
                     }
@@ -336,6 +340,7 @@ jQuery(document).ready(function($) {
     // Mostrar formulario
     $('#btn-nuevo-comunicado').click(function(e) {
         e.preventDefault();
+        $('#comunicado-save-notice').hide();
         resetFormulario();
         $('#form-comunicado-titulo').text('Crear Nuevo Comunicado');
         $formContainer.slideDown();
@@ -379,6 +384,7 @@ jQuery(document).ready(function($) {
 
     $('#btn-nuevo-evento').on('click', function(e) {
         e.preventDefault();
+        $('#comunicado-save-notice').hide();
         resetFormulario();
         var $eventCategory = $('#comunicado_categoria option[data-slug="eventos"]');
         if (!$eventCategory.length) {
@@ -435,8 +441,19 @@ jQuery(document).ready(function($) {
             return;
         }
 
+        var esEvento = $('#comunicado_categoria option:selected').data('slug') === 'eventos'
+            || $('#comunicado_fecha_evento').val() !== '';
+        var tipoPublicacion = esEvento ? 'esta actividad o evento' : 'este comunicado o circular';
+        var confirmacion = id
+            ? '¿Confirmas guardar los cambios de "' + titulo + '"?'
+            : '¿Confirmas crear y publicar ' + tipoPublicacion + ' "' + titulo + '"?';
+        if (!confirm(confirmacion)) {
+            return;
+        }
+
         $('#comunicado-spinner').addClass('is-active');
         $('#btn-guardar-comunicado').prop('disabled', true);
+        $('#comunicado-save-notice').hide();
 
         $.post(edusiteco_ajax.ajax_url, {
             action: 'edusiteco_save_comunicado',
@@ -458,9 +475,15 @@ jQuery(document).ready(function($) {
             if (response.success) {
                 $formContainer.slideUp();
                 cargarComunicados();
+                $('#comunicado-save-notice p').text(id ? 'Los cambios se guardaron correctamente.' : 'La publicación se creó y publicó correctamente.');
+                $('#comunicado-save-notice').show();
             } else {
                 alert('Error al guardar: ' + response.data);
             }
+        }).fail(function() {
+            $('#comunicado-spinner').removeClass('is-active');
+            $('#btn-guardar-comunicado').prop('disabled', false);
+            alert('No se pudo guardar el comunicado por un error de conexión.');
         });
     });
 
