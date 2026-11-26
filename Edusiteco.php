@@ -1,8 +1,8 @@
 <?php
 /*
-Plugin Name: Edusiteco
-Description: Permite configurar y mostrar en el footer la información institucional del colegio (incluye redes sociales y enlaces de interés).
-Version: 2.0
+Plugin Name: Edusiteco v2
+Description: Permite configurar y mostrar en el footer la información institucional del colegio (incluye redes sociales y enlaces de interés) - Versión 2.
+Version: 2.0.0
 Author: Daniel Adrada
 Author: Nicol anacona y Diego Muñoz
 */
@@ -371,10 +371,7 @@ function edusiteco_welcome_screen()
             <li>✔ Símbolos institucionales</li>
             <li>✔ Información de contacto</li>
             <li>✔ Footer y enlaces importantes</li>
-            //Plugin Name: Edusiteco 
-            //Description: Permite configurar y mostrar en el footer la información institucional del colegio (incluye redes sociales y enlaces de interés).
-            //Version: 2.0
-            //Author: nicol anacona y diego muñoz
+           
 
             <li>✔ comunicados y circulares</li>
             <li>✔ profesores y personal docente</li>
