@@ -319,9 +319,107 @@ function edusiteco_rectoria_admin_page()
     <?php
 }
 
+function edusiteco_sanitize_info_colegio_settings($input)
+{
+    if (!is_array($input)) {
+        add_settings_error(
+            'info_colegio_settings',
+            'invalid_settings',
+            'No se pudieron guardar los cambios porque el formato enviado no es válido.',
+            'error'
+        );
+        $current = get_option('info_colegio_settings', array());
+        return is_array($current) ? $current : array();
+    }
+
+    $invalid_value = false;
+    $sanitized = edusiteco_sanitize_info_colegio_value($input, $invalid_value);
+
+    if ($invalid_value) {
+        add_settings_error(
+            'info_colegio_settings',
+            'invalid_settings_value',
+            'Algunos valores no válidos se omitieron al guardar la configuración.',
+            'error'
+        );
+    }
+
+    return $sanitized;
+}
+
+function edusiteco_sanitize_info_colegio_value($value, &$invalid_value, $key = '')
+{
+    if (is_array($value)) {
+        $sanitized = array();
+        foreach ($value as $child_key => $child_value) {
+            if (!is_string($child_key) && !is_int($child_key)) {
+                $invalid_value = true;
+                continue;
+            }
+            $sanitized[$child_key] = edusiteco_sanitize_info_colegio_value(
+                $child_value,
+                $invalid_value,
+                (string) $child_key
+            );
+        }
+        return $sanitized;
+    }
+
+    if (!is_scalar($value)) {
+        $invalid_value = true;
+        return '';
+    }
+
+    $value = (string) $value;
+
+    if ($key === 'mapa') {
+        if (preg_match('/<iframe\b[^>]*\bsrc\s*=\s*(["\'])(.*?)\1/i', $value, $matches)) {
+            $value = $matches[2];
+        }
+        return esc_url_raw($value);
+    }
+
+    if (preg_match('/(?:_url|url|image|imagen|foto)$/i', $key) || in_array($key, array('facebook', 'instagram', 'twitter', 'youtube', 'tiktok'), true)) {
+        return esc_url_raw($value);
+    }
+
+    if (preg_match('/(?:correo|email)$/i', $key)) {
+        return sanitize_email($value);
+    }
+
+    if (in_array($key, array(
+        'historia',
+        'historia_resumen',
+        'mision',
+        'mision_resumen',
+        'vision',
+        'vision_resumen',
+        'valores_resumen',
+        'descripcion',
+        'texto',
+        'letra',
+        'subtitulo',
+        'contacto_hero_subtitulo',
+        'psico_saludo',
+        'psico_emergencias',
+    ), true)) {
+        return wp_kses_post($value);
+    }
+
+    if ($key === 'icono' && preg_match('/^\s*https?:\/\//i', $value)) {
+        return esc_url_raw($value);
+    }
+
+    return sanitize_text_field($value);
+}
+
 // Registrar opciones
 add_action('admin_init', function () {
-    register_setting('info_colegio_group', 'info_colegio_settings');
+    register_setting('info_colegio_group', 'info_colegio_settings', array(
+        'sanitize_callback' => 'edusiteco_sanitize_info_colegio_settings',
+        'type' => 'array',
+        'default' => array(),
+    ));
 });
 
 // Cargar scripts de medios
@@ -371,6 +469,7 @@ function edusiteco_welcome_screen()
             <li>✔ Símbolos institucionales</li>
             <li>✔ Información de contacto</li>
             <li>✔ Footer y enlaces importantes</li>
+            <li>✔ Encabezados del menú principal</li>
            
 
             <li>✔ comunicados y circulares</li>
@@ -433,6 +532,7 @@ function edusiteco_admin_page()
             <a href="#tab-directorio" class="nav-tab">Directorio</a>
             <a href="#tab-simbolosInstitucionales" class="nav-tab">Símbolos Institucionales</a>
             <a href="#tab-contactanos" class="nav-tab">Contactanos</a>
+            <a href="#tab-menu-headers" class="nav-tab">Encabezados del menú</a>
             <a href="#tab-footer" class="nav-tab">Footer</a>
             <a href="#tab-profesores" class="nav-tab">Profesores</a>
             <a href="#tab-psicoorientacion" class="nav-tab">Psicoorientación</a>
@@ -468,6 +568,10 @@ function edusiteco_admin_page()
 
             <div id="tab-contactanos" class="tab-content" style="display:none;">
                 <?php include plugin_dir_path(__FILE__) . 'admin/seccion-contactanos.php'; ?>
+            </div>
+
+            <div id="tab-menu-headers" class="tab-content" style="display:none;">
+                <?php include plugin_dir_path(__FILE__) . 'admin/seccion-menu-headers.php'; ?>
             </div>
 
             <div id="tab-footer" class="tab-content" style="display:none;">

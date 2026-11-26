@@ -8,6 +8,10 @@ add_action('wp_ajax_edusiteco_load_profesores', 'edusiteco_load_profesores_ajax'
 function edusiteco_load_profesores_ajax() {
     check_ajax_referer('edusiteco_admin_nonce', 'security');
 
+    if (!current_user_can('manage_options')) {
+        wp_send_json_error('No tienes permisos.');
+    }
+
     $args = array(
         'post_type'      => 'profesor',
         'posts_per_page' => -1,
@@ -60,14 +64,58 @@ function edusiteco_save_profesor_ajax() {
         wp_send_json_error('No tienes permisos.');
     }
 
-    $id = isset($_POST['profesor_id']) ? intval($_POST['profesor_id']) : 0;
-    $nombre = isset($_POST['nombre']) ? sanitize_text_field($_POST['nombre']) : '';
-    $asignatura = isset($_POST['asignatura']) ? sanitize_text_field($_POST['asignatura']) : '';
-    $descripcion = isset($_POST['descripcion']) ? wp_kses_post(stripslashes($_POST['descripcion'])) : '';
-    $foto_id = isset($_POST['foto_id']) ? intval($_POST['foto_id']) : 0;
+    if (!isset($_POST['profesor_id']) || !is_scalar($_POST['profesor_id'])) {
+        wp_send_json_error('El identificador del profesor no es válido.');
+    }
+
+    $raw_id = trim((string) wp_unslash($_POST['profesor_id']));
+    if (!preg_match('/^\d+$/', $raw_id)) {
+        wp_send_json_error('El identificador del profesor no es válido.');
+    }
+    $id = absint($raw_id);
+
+    foreach (array('nombre', 'asignatura', 'descripcion', 'foto_id') as $field) {
+        if (isset($_POST[$field]) && !is_scalar($_POST[$field])) {
+            wp_send_json_error('Los datos del profesor no tienen un formato válido.');
+        }
+    }
+
+    $nombre = isset($_POST['nombre']) ? sanitize_text_field(wp_unslash((string) $_POST['nombre'])) : '';
+    $asignatura = isset($_POST['asignatura']) ? sanitize_text_field(wp_unslash((string) $_POST['asignatura'])) : '';
+    $descripcion = isset($_POST['descripcion']) ? wp_kses_post(wp_unslash((string) $_POST['descripcion'])) : '';
+    $foto_id_raw = isset($_POST['foto_id']) ? trim((string) wp_unslash($_POST['foto_id'])) : '';
+
+    if ($foto_id_raw !== '' && !preg_match('/^\d+$/', $foto_id_raw)) {
+        wp_send_json_error('La foto seleccionada no es válida.');
+    }
+    $foto_id = absint($foto_id_raw);
 
     if (empty($nombre)) {
         wp_send_json_error('El nombre es obligatorio.');
+    }
+
+    if ($id > 0) {
+        $existing_profesor = get_post($id);
+        if (!$existing_profesor || $existing_profesor->post_type !== 'profesor') {
+            wp_send_json_error('El profesor solicitado no existe.');
+        }
+        if (!current_user_can('edit_post', $id)) {
+            wp_send_json_error('No tienes permisos para editar este profesor.');
+        }
+    } elseif (!current_user_can('edit_profesores') || !current_user_can('publish_profesores')) {
+        wp_send_json_error('No tienes permisos para crear y publicar profesores.');
+    }
+
+    if ($foto_id > 0) {
+        $attachment = get_post($foto_id);
+        if (
+            !$attachment
+            || $attachment->post_type !== 'attachment'
+            || !wp_attachment_is_image($foto_id)
+            || !current_user_can('edit_post', $foto_id)
+        ) {
+            wp_send_json_error('La imagen seleccionada no es válida o no tienes permisos para usarla.');
+        }
     }
 
     $post_data = array(
@@ -79,13 +127,13 @@ function edusiteco_save_profesor_ajax() {
 
     if ($id > 0) {
         $post_data['ID'] = $id;
-        $post_id = wp_update_post($post_data);
+        $post_id = wp_update_post($post_data, true);
     } else {
-        $post_id = wp_insert_post($post_data);
+        $post_id = wp_insert_post($post_data, true);
     }
 
     if (is_wp_error($post_id)) {
-        wp_send_json_error('Error al guardar el profesor.');
+        wp_send_json_error($post_id->get_error_message());
     }
 
     update_post_meta($post_id, 'profesor_asignatura', $asignatura);
@@ -113,16 +161,28 @@ function edusiteco_delete_profesor_ajax() {
         wp_send_json_error('No tienes permisos.');
     }
 
-    $id = isset($_POST['profesor_id']) ? intval($_POST['profesor_id']) : 0;
-
-    if ($id > 0) {
-        $result = wp_delete_post($id, true);
-        if ($result) {
-            wp_send_json_success('Profesor eliminado.');
-        } else {
-            wp_send_json_error('Error al eliminar el profesor.');
-        }
-    } else {
-        wp_send_json_error('ID inválido.');
+    if (!isset($_POST['profesor_id']) || !is_scalar($_POST['profesor_id'])) {
+        wp_send_json_error('El identificador del profesor no es válido.');
     }
+
+    $raw_id = trim((string) wp_unslash($_POST['profesor_id']));
+    if (!preg_match('/^[1-9]\d*$/', $raw_id)) {
+        wp_send_json_error('El identificador del profesor no es válido.');
+    }
+
+    $id = absint($raw_id);
+    $profesor = get_post($id);
+    if (!$profesor || $profesor->post_type !== 'profesor') {
+        wp_send_json_error('El profesor solicitado no existe.');
+    }
+    if (!current_user_can('delete_post', $id)) {
+        wp_send_json_error('No tienes permisos para eliminar este profesor.');
+    }
+
+    $result = wp_delete_post($id, true);
+    if (!$result) {
+        wp_send_json_error('Error al eliminar el profesor.');
+    }
+
+    wp_send_json_success('Profesor eliminado.');
 }
